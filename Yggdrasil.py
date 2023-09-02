@@ -4,25 +4,33 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 localFolder = "/home/arthur/Documents"
-fileName = "/YggTeste"
+fileNameDb = "YggTeste.db"
+fileNameFwl = "YggTeste.fwl"
 
 def backup():
     print("Making Backup...")
     date = datetime.now(ZoneInfo('America/Sao_Paulo'))
+
     try :
-        oldSave = m.find("ValheimWorld/YggTeste", exclude_deleted=True)
-        m.rename(oldSave, "YggTeste" + date.strftime(" %Y-%m-%d-%H:%M:%S %Z%z"))
+        oldSaveDb = m.find("ValheimWorld/" + fileNameDb, exclude_deleted=True)
+        m.rename(oldSaveDb, fileNameDb + date.strftime(" %Y-%m-%d-%H:%M:%S"))
+
+        oldSaveFwl = m.find("ValheimWorld/" + fileNameFwl, exclude_deleted=True)
+        m.rename(oldSaveFwl, fileNameFwl + date.strftime(" %Y-%m-%d-%H:%M:%S"))
     except:
         print(" - Nenhum arquivo encontrado para fazer backup")
 
 def upload():
     print("Uploading...")
     folder = m.find("ValheimWorld", exclude_deleted=True)
-    m.upload('/home/arthur/Documents/YggTeste', folder[0])
+    m.upload(localFolder + "/" + fileNameDb, folder[0])
+    m.upload(localFolder + "/" + fileNameFwl, folder[0])
 
 def download():
     print("Downloading...")
-    file = m.find('ValheimWorld/YggTeste', exclude_deleted=True)
+    file = m.find('ValheimWorld/' + fileNameDb, exclude_deleted=True)
+    m.download(file, localFolder)
+    file = m.find('ValheimWorld/' + fileNameFwl, exclude_deleted=True)
     m.download(file, localFolder)
 
 
