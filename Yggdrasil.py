@@ -3,12 +3,8 @@ from mega import Mega
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-localFolder = ""
-pathDb = ""
-pathFwl = ""
-
 def initialize():
-    global pathDb, pathFwl, localFolder
+    global pathDb, pathFwl, localFolder, worldName
     # read the path and world name from Path.Ygg
     print("Initializing...")
     file = open("Path.Ygg", "r")
@@ -26,29 +22,30 @@ def backup():
     date = datetime.now(ZoneInfo('America/Sao_Paulo'))
 
     try :
-        oldSaveDb = m.find("ValheimWorld/" + pathDb, exclude_deleted=True)
-        m.rename(oldSaveDb, pathDb + date.strftime(" %Y-%m-%d-%H:%M:%S"))
+        oldSaveDb = m.find('ValheimWorld/' + worldName + ".db", exclude_deleted=True)
+        m.rename(oldSaveDb, worldName + ".db" + date.strftime(" %Y-%m-%d-%H:%M:%S"))
 
-        oldSaveFwl = m.find("ValheimWorld/" + pathFwl, exclude_deleted=True)
-        m.rename(oldSaveFwl, pathFwl + date.strftime(" %Y-%m-%d-%H:%M:%S"))
+        oldSaveFwl = m.find('ValheimWorld/' + worldName + ".fwl", exclude_deleted=True)
+        m.rename(oldSaveFwl, worldName + ".fwl" + date.strftime(" %Y-%m-%d-%H:%M:%S"))
     except:
         print(" - Nenhum arquivo encontrado para fazer backup")
 
 def upload():
     # Sobe os 2 arquivos para o Mega
     print("Uploading...")
-    print(pathDb)
-    print(pathFwl)
     folder = m.find("ValheimWorld", exclude_deleted=True)
+    print("    " + pathDb)
     m.upload(pathDb, folder[0])
+    print("    " + pathFwl)
     m.upload(pathFwl, folder[0])
 
 def download():
     # Substitui os arquivos locais pelos que estão no Mega
     print("Downloading...")
-    file = m.find('ValheimWorld/' + pathDb, exclude_deleted=True)
+    file = m.find('ValheimWorld/' + worldName + ".db", exclude_deleted=True)
     m.download(file, localFolder)
-    file = m.find('ValheimWorld/' + pathFwl, exclude_deleted=True)
+
+    file = m.find('ValheimWorld/' + worldName + ".fwl", exclude_deleted=True)
     m.download(file, localFolder)
 
 
@@ -57,8 +54,11 @@ initialize()
 #quit()
 
 mega = Mega()
-print("Login in... (Heimdall is examining yout ID)")
+print("Login in... (Heimdall is examining your ID)")
 m = mega.login("artgames100@gmail.com", "t2h0o0r9")
+if m is None:
+    print("Não conectou")
+    quit()
 print("you're fit to cross the Bifröst\n")
 
 print("Enter Input")
