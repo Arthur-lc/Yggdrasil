@@ -25,42 +25,6 @@ const worldName = lines[1].trim();
 console.log(localFolderPath);
 console.log(`World Name: ${worldName}`);
 
-main();
-async function main() {
-    console.log("Login in... (Heimdall is examining your ID)");
-    console.log("you're fit to cross the Bifröst");
-
-    
-    while (true) {    
-        console.log("\nWhat do you whant? - Heimdall asks with his deep voice");
-        console.log(" - up: sobe o seu save local para a nuvem");
-        console.log(" - down: substitui o save local pelo save da nuvem\n");
-        console.log(" - exit: fecha o programa\n");
-
-        const prompt = promptSync();
-        const command = prompt('');
-        
-        if (command === 'up' || command == 'u') {
-            console.log("Criando backup");
-            await createBackUp();
-            
-            console.log("\nSubindo arquivos");
-            await upload()
-        } 
-        else if (command === 'down' || command == 'd') {
-            console.log("Fazendo download");
-            await download();
-        }
-        else if (command === 'exit' || command == 'e') {
-            console.log("closing the Bifröst");
-            exit()
-        }
-        else {
-            console.log("Não entendi\n\n");
-        }
-    }
-}
-
 
 
 async function uploadFile(localFilePath, destination) {    
@@ -178,3 +142,37 @@ async function download() {
         }
     }
 }
+
+async function main() {
+    console.log("Login in... (Heimdall is examining your ID)");
+    console.log("you're fit to cross the Bifröst");
+
+    
+    console.log("\nWhat do you whant? - Heimdall asks with his deep voice");
+    console.log(" - up: sobe o seu save local para a nuvem");
+    console.log(" - down: substitui o save local pelo save da nuvem");
+    console.log(" - exit: fecha o programa\n");
+
+    const prompt = promptSync();
+    const command = prompt('');
+    
+    if (command === 'up' || command == 'u') {
+        console.log("Criando backup");
+        await createBackUp()
+        
+        console.log("\nSubindo arquivos");
+        await upload();
+    } 
+    else if (command === 'down' || command == 'd') {
+        console.log("Fazendo download");
+        await download();
+    }
+    else if (command === 'exit' || command == 'e') {
+        console.log("closing the Bifröst");
+        exit()
+    }
+    else {
+        console.log("Não entendi\n\n");
+    }
+}
+main();
