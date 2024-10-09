@@ -1,11 +1,9 @@
-import { createRequire } from 'module';
-import admin from 'firebase-admin';
-import path from 'path';
-import fs from 'fs'
-import promptSync from 'prompt-sync';
-import { exit } from 'process';
+const admin = require('firebase-admin');
+const path = require('path');
+const fs = require('fs');
+const promptSync = require('prompt-sync')();
+const { exit } = require('process');
 
-const require = createRequire(import.meta.url);
 const serviceAccount = require('./firebase-keys.json');
 
 admin.initializeApp({
@@ -153,8 +151,7 @@ async function main() {
     console.log(" - down: substitui o save local pelo save da nuvem");
     console.log(" - exit: fecha o programa\n");
 
-    const prompt = promptSync();
-    const command = prompt('');
+    const command = promptSync('');
     
     if (command === 'up' || command == 'u') {
         console.log("Criando backup");

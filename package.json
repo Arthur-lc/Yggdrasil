@@ -1,7 +1,14 @@
 {
-    "type": "module",
     "dependencies": {
         "firebase-admin": "^12.6.0",
         "prompt-sync": "^4.2.0"
+    },
+    "name": "yggdrasil",
+    "version": "1.0.0",
+    "bin": "Yggdrasil.js",
+    "pkg": {
+        "targets": [
+            "node16-win-x64"
+        ]
     }
 }
