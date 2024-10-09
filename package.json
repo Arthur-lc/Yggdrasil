@@ -1,0 +1,7 @@
+{
+    "type": "module",
+    "dependencies": {
+        "firebase-admin": "^12.6.0",
+        "prompt-sync": "^4.2.0"
+    }
+}

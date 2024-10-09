@@ -1,3 +1,5 @@
-
 /build
 Yggdrasil.spec
+/node_modules
+firebase-keys.json
+.Ygg
