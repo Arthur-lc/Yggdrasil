@@ -2,9 +2,11 @@ const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
 const promptSync = require('prompt-sync')();
+const readline = require('readline');
 const { exit } = require('process');
 
 const serviceAccount = require('./firebase-keys.json');
+const { version } = require('os');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -21,8 +23,7 @@ const localFolderPath = lines[0].trim();
 const worldName = lines[1].trim();
 
 console.log(localFolderPath);
-console.log(`World Name: ${worldName}`);
-
+console.log(`\nWorld Name: ${worldName}`);
 
 
 async function uploadFile(localFilePath, destination) {    
@@ -41,20 +42,6 @@ async function downloadFile(filePath, localDestPath) {
     console.log(`Downloaded ${filePath} to ${localDestPath}`);
 }
 
-const getCurrentDateTime = () => {
-    const now = new Date();
-  
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-    const day = String(now.getDate()).padStart(2, '0');
-    
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  };
-
 async function renameFile(oldFilePath, newFilePath) {
     const oldFile = bucket.file(oldFilePath);
 
@@ -69,13 +56,13 @@ async function renameFile(oldFilePath, newFilePath) {
 
 // Function to rename all files in a Firebase Storage folder
 async function createBackUp() {
-    const currentTime = getCurrentDateTime();
+    const currentTime = new Date().toISOString();
     // List all files in the folder
     const [files] = await bucket.getFiles({ prefix: `${worldName}/` });
 
     if (files.length === 0) {
-    console.log('No files found in the folder.');
-    return;
+        console.log('No files found in the cloud.');
+        return;
     }
 
     // Loop through each file
@@ -95,8 +82,8 @@ async function createBackUp() {
 
 async function upload() {
     const localFilePath = path.join(localFolderPath, worldName);
-    const fwl_localFilePath = path.join(localFilePath + '.fwl')
-    const db_localFilePath = path.join(localFilePath + '.db')
+    const fwl_localFilePath = localFilePath + '.fwl';
+    const db_localFilePath = localFilePath + '.db';
     
     if (!fs.statSync(fwl_localFilePath).isFile()) {
         console.log("ERRO - UPLOAD ABORTADO: " + fwl_localFilePath + "is not a file.");
@@ -115,11 +102,27 @@ async function upload() {
     destination = worldName + '/' + worldName + '.db';
     console.log(" > " + worldName + '.db');
     uploadFile(db_localFilePath, destination);
+
+    
+    const dataYggPath = path.join(localFolderPath, `${worldName}.Ygg`);
+    fs.writeFile(dataYggPath, 'subiu', (err) => {
+        if (err) console.log(err);
+        else {
+            console.log("File written successfully\n");
+        }
+    });
 }
 
 async function download() {
     if (!fs.existsSync(localFolderPath)) {
         console.log(`ERRO: ${localFolderPath} does not exist`);
+    }
+
+    const dataYggPath = path.join(localFolderPath, `${worldName}.Ygg`)
+    const dataYgg = fs.readFileSync(dataYggPath, 'utf8').trim();
+    if (dataYgg === "desceu") {
+        console.log("\n\nERRO: Voce ja fez o download\nPor segurança voce nao pode fazer o download novamente.\nSe voce tem certeza que precisa fazer o download, contate o suporte par areceber instrucoes.");
+        return;
     }
 
     const [files] = await bucket.getFiles({ prefix: worldName });
@@ -139,37 +142,89 @@ async function download() {
             await downloadFile(filePath, localFilePath);
         }
     }
+
+    fs.writeFile(dataYggPath, "desceu", (err) => {});
 }
 
-async function main() {
-    console.log("Login in... (Heimdall is examining your ID)");
-    console.log("you're fit to cross the Bifröst");
+async function downloadFolder(folderPath, destination) {
+    const [files] = await bucket.getFiles({ prefix: folderPath });
 
-    
-    console.log("\nWhat do you whant? - Heimdall asks with his deep voice");
-    console.log(" - up: sobe o seu save local para a nuvem");
-    console.log(" - down: substitui o save local pelo save da nuvem");
-    console.log(" - exit: fecha o programa\n");
+    if (files.length === 0) {
+        console.log('No files found in the specified folder.');
+        return;
+    }
 
-    const command = promptSync('');
-    
-    if (command === 'up' || command == 'u') {
-        console.log("Criando backup");
-        await createBackUp()
+    // Loop through the files and download each one
+    for (const file of files) {
+        const remoteFilePath = file.name; // Full path of the file in Firebase Storage
+        const relativeFilePath = path.relative(folderPath, remoteFilePath); // Get the relative path from the prefix
+
+        const localFilePath = path.join(destination, relativeFilePath.replace(/:/g, '-')); // Local destination path
+
+        // Ensure the local directory structure exists
+        const localDir = path.dirname(localFilePath);
         
-        console.log("\nSubindo arquivos");
-        await upload();
-    } 
-    else if (command === 'down' || command == 'd') {
-        console.log("Fazendo download");
-        await download();
+        if (!fs.existsSync(localDir)) {
+            fs.mkdirSync(localDir, { recursive: true });
+        }
+
+        // Download the file
+        await file.download({ destination: localFilePath });
+
+        console.log(`Downloaded ${remoteFilePath} to ${localFilePath}`);
     }
-    else if (command === 'exit' || command == 'e') {
-        console.log("closing the Bifröst");
-        exit()
-    }
-    else {
-        console.log("Não entendi\n\n");
-    }
+
+    console.log('All files downloaded successfully.');
 }
-main();
+
+async function downloadBackup() {
+    const backupPath = path.join(localFolderPath, `${worldName}-backup`);
+    
+    await downloadFolder(`${worldName}/backup`, backupPath)
+}
+
+function askQuestion(query) {
+    return new Promise(resolve => rl.question(query, resolve));
+}
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+async function interface() {
+    let continueLoop = true;
+
+    while (continueLoop) {
+        console.log("\nWhat would you like to do?");
+        console.log(" - up: sobe o seu save local para a nuvem");
+        console.log(" - down: substitui o save local pelo save da nuvem");
+        console.log(" - backup: baixa todos os arquivos de backup");
+        console.log(" - exit: sair do programa");
+
+        const command = await askQuestion('> ');
+
+        if (command === 'up' || command === 'u') {
+            console.log("Criando backup...");
+            await createBackUp();
+
+            console.log("\nSubindo arquivos...");
+            await upload();
+        } else if (command === 'down' || command === 'd') {
+            console.log("Fazendo download...");
+            await download();
+        } else if (command === 'backup' || command === 'b') {
+            console.log("Fazendo download...");
+            await downloadBackup();
+        } else if (command === 'exit' || command === 'e') {
+            continueLoop = false;
+            console.log("Saindo do programa...");
+        } else {
+            console.log("Comando inválido, tente novamente.");
+        }
+    }
+    rl.close();
+}
+
+
+interface();
