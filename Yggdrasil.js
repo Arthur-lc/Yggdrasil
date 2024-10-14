@@ -39,7 +39,6 @@ async function downloadFile(filePath, localDestPath) {
     };
   
     await bucket.file(filePath).download(options);
-    console.log(`Downloaded ${filePath} to ${localDestPath}`);
 }
 
 async function renameFile(oldFilePath, newFilePath) {
@@ -119,16 +118,18 @@ async function download() {
     }
 
     const dataYggPath = path.join(localFolderPath, `${worldName}.Ygg`)
-    const dataYgg = fs.readFileSync(dataYggPath, 'utf8').trim();
-    if (dataYgg === "desceu") {
-        console.log("\n\nERRO: Voce ja fez o download\nPor segurança voce nao pode fazer o download novamente.\nSe voce tem certeza que precisa fazer o download, contate o suporte par areceber instrucoes.");
-        return;
+    if (fs.existsSync(dataYggPath)) {
+        const dataYgg = fs.readFileSync(dataYggPath, 'utf8').trim();
+        if (dataYgg === "desceu") {
+            console.log("\n\nERRO: Voce ja fez o download\nPor segurança voce nao pode fazer o download novamente.\nSe voce tem certeza que precisa fazer o download, contate o suporte par areceber instrucoes.");
+            return;
+        }
     }
 
     const [files] = await bucket.getFiles({ prefix: worldName });
 
     if (files.length === 0) {
-        console.log('No files found in the folder.');
+        console.log('No files found in the cloud for this world name.');
         return;
     }
 
