@@ -20,3 +20,9 @@ When you're done playing, upload your world so others can continue where you lef
 * Second line: Enter your world’s name.
 4. Firebase Setup:
 * Place your firebase-keys.json file in the Yggdrasil folder.
+
+# Compile
+
+```
+pkg .
+```
